@@ -7,3 +7,5 @@ __pycache__/
 
 # Plugin build output
 build/
+.ci-tmp/
+out/
