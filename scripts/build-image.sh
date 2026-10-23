@@ -1,40 +1,22 @@
 #!/usr/bin/env bash
-#
-# Builds the Mattermore server image: upstream's Team Edition image with our
-# binary and our calls plugin.
-#
-# Usage: ./scripts/build-image.sh [tag]
-# Requires: podman or docker, plus whatever build-server.sh and build-calls.sh need.
-
+# Shared source build, supported by rootless Podman and Docker Buildx.
+# Usage: build-image.sh [tag] [minimal|alpine|ubi|ubi-micro|debug]
 set -euo pipefail
-
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TAG="${1:-mattermore:dev}"
-STAGE="$ROOT/build/image"
-
-# shellcheck source=../upstream.env
-source "$ROOT/upstream.env"
-
-# CI sets CONTAINER_ENGINE=docker, because the runners ship podman too and the
-# image has to land in the store the push step reads from.
-engine="${CONTAINER_ENGINE:-$(command -v podman || command -v docker)}" || {
-    echo "needs podman or docker" >&2; exit 1
-}
-command -v "$engine" >/dev/null || { echo "no such engine: $engine" >&2; exit 1; }
-
-rm -rf "$STAGE"; mkdir -p "$STAGE"
-"$ROOT/scripts/build-server.sh" "$STAGE/mattermore-server"   # also emits $STAGE/client
-"$ROOT/scripts/build-calls.sh" "$STAGE"
-mv "$STAGE/mattermore-calls-$CALLS_VERSION.tar.gz" "$STAGE/mattermore-calls.tar.gz"
-# The checksum is for people downloading the bundle, not for the image.
-rm -f "$STAGE"/mattermore-calls-*.sha256
-cp "$ROOT/Containerfile" "$STAGE/Containerfile"
-
-# The image rewrites the config upstream ships, so both halves of that go into
-# the build context.
-mkdir -p "$STAGE/config" "$STAGE/scripts"
-cp "$ROOT/config/overrides.json" "$STAGE/config/overrides.json"
-cp "$ROOT/scripts/merge-config.py" "$STAGE/scripts/merge-config.py"
-
-"$engine" build --build-arg "UPSTREAM_VERSION=${SERVER_TAG#v}" -t "$TAG" -f "$STAGE/Containerfile" "$STAGE"
-echo "==> $TAG"
+cd "$ROOT"
+tag="${1:-mattermore:dev}"
+variant="${2:-minimal}"
+case "$variant" in minimal|alpine|ubi|ubi-micro|debug) ;; *) exit 2;; esac
+engine="${CONTAINER_ENGINE:-$(command -v podman || command -v docker)}"
+# Only tracked files enter the build, regardless of local ignored files.
+context="$(mktemp -d)"
+trap 'rm -rf "$context"' EXIT
+git archive HEAD | tar -x -C "$context"
+# shellcheck source=upstream.env
+source "$context/upstream.env"
+"$engine" build --target "$variant" --build-arg "RUNTIME=$variant" \
+    --build-arg "SOURCE_REVISION=$(git rev-parse HEAD)" \
+    --build-arg "SOURCE_DATE_EPOCH=$(git show -s --format=%ct HEAD)" \
+    --build-arg "CREATED=$(git show -s --format=%cI HEAD)" \
+    --build-arg "SERVER_COMMIT=$SERVER_COMMIT" --build-arg "CALLS_COMMIT=$CALLS_COMMIT" \
+    -t "$tag" -f "$context/Containerfile" "$context"

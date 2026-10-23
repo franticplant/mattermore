@@ -1,0 +1,10 @@
+# Security-sensitive supply-chain and signing policy changes need owner review.
+/.github/ @franticplant
+/AGENTS.md @franticplant
+/Containerfile @franticplant
+/.dockerignore @franticplant
+/upstream.env @franticplant
+/patches/ @franticplant
+/scripts/ @franticplant
+/security/ @franticplant
+/tests/ci/ @franticplant

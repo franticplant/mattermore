@@ -11,13 +11,14 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="${1:-$ROOT/dist}"
 WORK="$ROOT/build/calls"
 
-# shellcheck source=../upstream.env
+# shellcheck source=upstream.env
 source "$ROOT/upstream.env"
 
 echo "==> upstream $CALLS_TAG, mattermore $CALLS_VERSION"
 rm -rf "$WORK"; mkdir -p "$(dirname "$WORK")" "$OUT"
 git clone --quiet --depth 1 --branch "$CALLS_TAG" \
     https://github.com/mattermost/mattermost-plugin-calls.git "$WORK"
+test "$(git -C "$WORK" rev-parse HEAD)" = "$CALLS_COMMIT"
 
 for patch in "$ROOT"/patches/calls/*.patch; do
     echo "    $(basename "$patch")"
@@ -28,6 +29,7 @@ done
 # must be installed first or webpack fails with a few hundred unresolved
 # imports that look like our patches broke something. They did not.
 ( cd "$WORK/webapp" && npm ci --no-audit --no-fund )
+( cd "$WORK/standalone" && npm ci --no-audit --no-fund )
 
 make -C "$WORK" dist
 
@@ -58,7 +60,8 @@ print(f"    stamped {version}")
 PY
 
 target="$OUT/mattermore-calls-$CALLS_VERSION.tar.gz"
-tar czf "$target" -C "$stage" com.mattermost.calls
+tar --sort=name --mtime="@${SOURCE_DATE_EPOCH:-0}" --owner=0 --group=0 \
+    --numeric-owner -cf - -C "$stage" com.mattermost.calls | gzip -n > "$target"
 rm -rf "$stage"
 ( cd "$OUT" && sha256sum "$(basename "$target")" > "$(basename "$target").sha256" )
 

@@ -1,0 +1,12 @@
+**
+!Containerfile
+!upstream.env
+!LICENSE
+!scripts
+!scripts/**
+!patches
+!patches/**
+!brand
+!brand/**
+!config
+!config/**
