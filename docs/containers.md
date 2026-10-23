@@ -97,7 +97,7 @@ SELinux host testing are separately recorded, not implied by Docker CI.
 `upstream.env` pairs human-readable tags with exact commits. Scripts clone the
 tag and abort if its peeled HEAD changes. Update both together, rebase patches
 only when necessary, and review upstream licensing/security changes. The
-transcriber is not part of this image. Go 1.26.8, Node 22.22.2, base images,
+transcriber is not part of this image. Go 1.26.10, Node 22.22.2, base images,
 BuildKit, scanner and action identities are pinned in source. To update a base:
 
 ```sh
@@ -123,8 +123,8 @@ build-image uses **committed tracked files**, not uncommitted edits. Docker
 requires Buildx for the CI OCI/provenance exports. Reproduction is intentionally
 limited to the server binary, not byte-identical OCI indexes, native provenance,
 webpack assets or Calls output. Attestations contain run-specific identities;
-webpack and upstream make may introduce other nondeterminism. Debian build-stage
-apt and debug apk repositories are still live; dependency indexes and scanner
+webpack and upstream make may introduce other nondeterminism. Debug apk
+repositories are still live; dependency indexes and scanner
 databases are not hermetically snapshotted. Those package versions appear in
 build/native SBOMs or final image inventories. Do not claim fully hermetic builds
 or a SLSA assurance level from max provenance alone.

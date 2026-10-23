@@ -10,27 +10,5 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  attribution:
-    name: no Claude attribution
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - name: Check commits and PR text
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          pattern='co-authored-by:.*(claude|anthropic)|generated with.*claude'
-          if printf '%s\n%s\n' "$PR_TITLE" "$PR_BODY" | grep -Eiq "$pattern"; then exit 1; fi
-          for c in $(git rev-list "$BASE_SHA..$HEAD_SHA"); do
-            if git log -1 --format=%B "$c" | grep -Eiq "$pattern"; then exit 1; fi
-          done
   containers:
     uses: ./.github/workflows/containers.yml

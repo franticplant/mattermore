@@ -2,7 +2,7 @@
 # digests deliberately; see docs/containers.md. Build only from a tracked context.
 ARG RUNTIME=minimal
 FROM docker.io/library/node:22.22.2-bookworm-slim@sha256:9f6d5975c7dca860947d3915877f85607946403fc55349f39b4bc3688448bb6e AS node
-FROM docker.io/library/golang:1.26.8-bookworm@sha256:dc9ad6c05acc7a88e5b71bde60a5fe3bd4b9f0db209011711b464107438a8107 AS toolchain
+FROM docker.io/library/golang:1.26.10-bookworm@sha256:632dff7351799a5a9954a48dc06670ade72ee44e8c351cdc0e5a57af2fea21af AS toolchain
 COPY --from=node /usr/local/ /usr/local/
 ENV GOTOOLCHAIN=local GOFLAGS=-mod=readonly
 WORKDIR /src
@@ -32,6 +32,8 @@ RUN cd build/server/server && CGO_ENABLED=0 go build -trimpath -buildvcs=false \
 RUN mkdir -p /out/build-inputs/server-webapp /out/build-inputs/server && cp upstream.env /out/build-inputs/ && \
     cp build/server/webapp/package-lock.json /out/build-inputs/server-webapp/ && \
     cp build/server/server/go.mod build/server/server/go.sum /out/build-inputs/server/
+RUN mkdir -p /out/notices/mattermost && find build/server -maxdepth 1 -type f \
+    \( -iname '*license*' -o -iname '*notice*' \) -exec cp {} /out/notices/mattermost/ \;
 
 FROM server AS calls
 RUN scripts/build-calls.sh /out && . ./upstream.env && \
@@ -52,6 +54,7 @@ COPY --from=server /out/client /mattermost/client
 COPY --from=calls /out/mattermore-calls.tar.gz /mattermost/prepackaged_plugins/mattermore-calls-linux-amd64.tar.gz
 COPY --from=server /out/build-inputs /mattermost/build-inputs
 COPY --from=calls /out/build-inputs /mattermost/build-inputs
+COPY --from=server /out/notices /mattermost/notices
 COPY LICENSE /mattermost/NOTICE-Mattermore-AGPL.txt
 COPY config/overrides.json /overrides.json
 COPY scripts/merge-config.py /merge.py

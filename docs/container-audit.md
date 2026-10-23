@@ -29,7 +29,9 @@ Baseline: fork main, before `ci/verified-container-family` changes.
   granted contents/packages write workflow-wide and used mutable action tags.
 * Fork Actions API: enabled, allowed_actions=all, SHA pinning not enforced;
   default token read, PR approval disabled. No environments or rulesets were
-  returned. No settings were weakened or changed by this work.
+  returned at initial audit. Subsequently, at the owner's explicit request,
+  active all-branch required-signatures ruleset 25726914 was created with no
+  bypass actors. No existing security setting was weakened.
 
 ## Actual references inspected
 
