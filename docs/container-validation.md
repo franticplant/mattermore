@@ -35,6 +35,13 @@ Initial local checks:
   resolved its immutable digest. This is not a compilation pass.
 * The inherited attribution-string check was removed at the owner's request;
   signed-commit enforcement is separate and remains active.
+* [39965854117](https://github.com/franticplant/mattermore/actions/runs/39965854117):
+  Go server, matching static mmctl, complete webapp and patched Calls compilation
+  passed; minimal OCI image assembled with native provenance/SBOM, index
+  `sha256:0df8f290686cc031eb3d1b6df13c73722bceecccbed77e8e6643710d2268ae43`
+  (local archive only, never published). The e2e engine wrapper recursively
+  called its own shell function and crashed with exit 139 before runtime tests.
+  Fixed with `command` to invoke the executable, with a regression unit test.
 
 Pending actual workflow execution: full compilation, five image
 assemblies, restrictive runtime/e2e, image scans/license inventory, independent

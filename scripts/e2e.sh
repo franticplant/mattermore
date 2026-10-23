@@ -10,7 +10,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 engine="${CONTAINER_ENGINE:-docker}"
-docker() { "$engine" "$@"; }
+docker() { command "$engine" "$@"; }
 
 IMAGE="${1:-mattermore:dev}"
 USERS="${USERS:-255}"          # the upstream hard limit is 250
